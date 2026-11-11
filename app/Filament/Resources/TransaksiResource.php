@@ -204,6 +204,10 @@ class TransaksiResource extends Resource
                     ->requiresConfirmation()
                     ->visible(fn (Transaksi $record): bool => $record->status_pembayaran === StatusPembayaran::BelumBayar)
                     ->action(fn (Transaksi $record) => $record->tandaiLunas()),
+                Tables\Actions\Action::make('cetakStruk')
+                    ->label('Cetak Struk')
+                    ->icon('heroicon-o-printer')
+                    ->url(fn (Transaksi $record): string => route('transaksi.struk', $record), shouldOpenInNewTab: true),
                 Tables\Actions\EditAction::make(),
             ]);
     }

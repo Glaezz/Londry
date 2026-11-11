@@ -15,6 +15,10 @@ class EditTransaksi extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('cetakStruk')
+                ->label('Cetak Struk')
+                ->icon('heroicon-o-printer')
+                ->url(fn (Transaksi $record): string => route('transaksi.struk', $record), shouldOpenInNewTab: true),
             Actions\DeleteAction::make()
                 ->visible(fn (Transaksi $record): bool => $record->status_laundry !== StatusLaundry::Diambil),
         ];
