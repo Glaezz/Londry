@@ -38,6 +38,16 @@ class Transaksi extends Model
     }
 
     /**
+     * Recalculate and persist the header total from the stored items.
+     */
+    public function syncTotal(): void
+    {
+        $this->forceFill([
+            'total_bayar' => round((float) $this->detail()->sum('subtotal'), 2),
+        ])->save();
+    }
+
+    /**
      * @return BelongsTo<Pelanggan, $this>
      */
     public function pelanggan(): BelongsTo
