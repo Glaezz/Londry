@@ -48,6 +48,44 @@ class Transaksi extends Model
     }
 
     /**
+     * Advance the laundry status one step. Refuses to finish an unpaid order.
+     */
+    public function lanjutkanStatus(): bool
+    {
+        $next = $this->status_laundry->next();
+
+        if ($next === null) {
+            return false;
+        }
+
+        if ($next === StatusLaundry::Diambil && $this->status_pembayaran !== StatusPembayaran::Lunas) {
+            return false;
+        }
+
+        if ($next === StatusLaundry::Selesai && $this->tanggal_selesai === null) {
+            $this->tanggal_selesai = now();
+        }
+
+        $this->status_laundry = $next;
+        $this->save();
+
+        return true;
+    }
+
+    public function tandaiLunas(): void
+    {
+        $this->status_pembayaran = StatusPembayaran::Lunas;
+        $this->save();
+    }
+
+    public function lunasiDanAmbil(): void
+    {
+        $this->status_pembayaran = StatusPembayaran::Lunas;
+        $this->status_laundry = StatusLaundry::Diambil;
+        $this->save();
+    }
+
+    /**
      * @return BelongsTo<Pelanggan, $this>
      */
     public function pelanggan(): BelongsTo

@@ -14,6 +14,7 @@ use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 class TransaksiResource extends Resource
@@ -156,15 +157,53 @@ class TransaksiResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status_laundry')
                     ->label('Status')
-                    ->badge()
-                    ->formatStateUsing(fn (StatusLaundry $state): string => ucfirst($state->value)),
+                    ->badge(),
                 Tables\Columns\TextColumn::make('status_pembayaran')
                     ->label('Pembayaran')
-                    ->badge()
-                    ->formatStateUsing(fn (StatusPembayaran $state): string => $state === StatusPembayaran::Lunas ? 'Lunas' : 'Belum Bayar'),
+                    ->badge(),
             ])
             ->defaultSort('tanggal_masuk', 'desc')
+            ->filters([
+                Tables\Filters\SelectFilter::make('status_laundry')
+                    ->label('Status Laundry')
+                    ->options(StatusLaundry::class),
+                Tables\Filters\SelectFilter::make('status_pembayaran')
+                    ->label('Status Pembayaran')
+                    ->options(StatusPembayaran::class),
+                Tables\Filters\Filter::make('tanggal_masuk')
+                    ->label('Rentang Tanggal Masuk')
+                    ->form([
+                        Forms\Components\DatePicker::make('dari')
+                            ->label('Dari'),
+                        Forms\Components\DatePicker::make('sampai')
+                            ->label('Sampai'),
+                    ])
+                    ->query(fn (Builder $query, array $data): Builder => $query
+                        ->when($data['dari'] ?? null, fn (Builder $q, string $dari): Builder => $q->whereDate('tanggal_masuk', '>=', $dari))
+                        ->when($data['sampai'] ?? null, fn (Builder $q, string $sampai): Builder => $q->whereDate('tanggal_masuk', '<=', $sampai))),
+            ])
             ->actions([
+                Tables\Actions\Action::make('lanjutkanStatus')
+                    ->label('Lanjutkan Status')
+                    ->icon('heroicon-o-arrow-right-circle')
+                    ->requiresConfirmation()
+                    ->visible(fn (Transaksi $record): bool => $record->status_laundry->next() !== null)
+                    ->action(fn (Transaksi $record) => $record->lanjutkanStatus()),
+                Tables\Actions\Action::make('lunasiDanAmbil')
+                    ->label('Lunasi dan Tandai Diambil')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->visible(fn (Transaksi $record): bool => $record->status_laundry === StatusLaundry::Selesai
+                        && $record->status_pembayaran === StatusPembayaran::BelumBayar)
+                    ->action(fn (Transaksi $record) => $record->lunasiDanAmbil()),
+                Tables\Actions\Action::make('tandaiLunas')
+                    ->label('Tandai Lunas')
+                    ->icon('heroicon-o-banknotes')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->visible(fn (Transaksi $record): bool => $record->status_pembayaran === StatusPembayaran::BelumBayar)
+                    ->action(fn (Transaksi $record) => $record->tandaiLunas()),
                 Tables\Actions\EditAction::make(),
             ]);
     }
