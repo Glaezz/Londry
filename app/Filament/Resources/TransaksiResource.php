@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
 class TransaksiResource extends Resource
@@ -30,6 +31,11 @@ class TransaksiResource extends Resource
     protected static ?string $pluralModelLabel = 'Transaksi';
 
     protected static ?int $navigationSort = 3;
+
+    public static function canDelete(Model $record): bool
+    {
+        return auth()->user()?->isAdmin() ?? false;
+    }
 
     public static function form(Form $form): Form
     {

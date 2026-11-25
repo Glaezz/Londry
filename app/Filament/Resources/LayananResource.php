@@ -10,6 +10,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class LayananResource extends Resource
 {
@@ -24,6 +25,11 @@ class LayananResource extends Resource
     protected static ?string $pluralModelLabel = 'Layanan';
 
     protected static ?int $navigationSort = 2;
+
+    public static function canDelete(Model $record): bool
+    {
+        return (auth()->user()?->isAdmin() ?? false) && ! $record->detailTransaksi()->exists();
+    }
 
     public static function form(Form $form): Form
     {
@@ -65,8 +71,7 @@ class LayananResource extends Resource
             ->defaultSort('nama_layanan')
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make()
-                    ->visible(fn (Layanan $record): bool => ! $record->detailTransaksi()->exists()),
+                Tables\Actions\DeleteAction::make(),
             ]);
     }
 

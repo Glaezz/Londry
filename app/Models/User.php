@@ -28,6 +28,11 @@ class User extends Authenticatable implements FilamentUser
         return $this->role !== null;
     }
 
+    public function isAdmin(): bool
+    {
+        return $this->role === Role::Admin;
+    }
+
     /**
      * Get the attributes that should be cast.
      *
